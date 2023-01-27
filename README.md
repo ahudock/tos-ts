@@ -1,1 +1,1 @@
-ThinkOrSwim thinkScript scripts
+ThinkOrSwim scripts
