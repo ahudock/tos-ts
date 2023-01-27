@@ -1,5 +1,5 @@
 #
-# Volume Accumulation
+# Volume Accumulation Gradient Histogram
 #
 # The Volume Accumulation study calculates
 # volume multiplied by the difference between
