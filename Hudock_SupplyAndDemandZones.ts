@@ -9,58 +9,66 @@
 # appear where buyers have taken control from sellers (or vice versa).
 #
 
-# Max number of bars between large candles that constitute a reversal
-input reversal_length = 3;
+# Number of previous bars to search for large reversal candles
+input lookback_window = 3;
 
 # Average length for determining large candles
 input avg_length = 20;
 
 # Minimum percentage ATR for large candles
-input factor = 0.8;
+input atr_factor = 0.8;
 
 def candle_range    = high - low;
 def bull_candle     = open < close;
-def large_body      = BodyHeight() >= (candle_range * .5);
-def avg_candle      = Average(candle_range, avg_length) * factor;
-def large_candle;
-def reversal;
+def is_large_body   = BodyHeight() >= (candle_range * .5);
+def avg_candle_size = Average(candle_range, avg_length) * atr_factor;
+def larger_than_avg = candle_range >= avg_candle_size;
+def is_large;
+def confirming_candle;
 
-if (large_body is true and candle_range >= avg_candle) {
-    large_candle = 1;
+# Find large reversal candles
+if (is_large_body == 1 and larger_than_avg == 1) {
+    is_large = 1;
 
-    reversal = fold i = 1 to reversal_length + 1 with found do
-        if large_candle[i] is true
-            and bull_candle is true
-            and bull_candle[i] is false
-            and close > high[i]
-                # Large bullish reversal
-                then i
-        else if large_candle[i] is true
-            and bull_candle is false
-            and bull_candle[i] is true
-            and close < low[i]
-                # Large bearish reversal
-                then i
-        else 0;
+    confirming_candle = fold i = 1 to lookback_window + 1
+        with found
+        while found == 0 do
+            if is_large[i] == 1
+                and bull_candle == bull_candle[i]
+                    # Already confirmed
+                    then found - 1
+            else if is_large[i] == 1
+                and bull_candle == 1
+                and bull_candle[i] == 0
+                and close > high[i]
+                    # Large bullish reversal
+                    then found + i
+            else if is_large[i] == 1
+                and bull_candle == 0
+                and bull_candle[i] == 1
+                and close < low[i]
+                    # Large bearish reversal
+                    then found + i
+            else 0;
 } else {
-    large_candle = 0;
-    reversal = 0;
+    is_large = 0;
+    confirming_candle = Double.NaN;
 }
 
-plot supply_zone = if reversal > 0 and bull_candle is false then high else Double.NaN;
+plot supply_zone = if confirming_candle > 0 and bull_candle == 0 then high else Double.NaN;
 supply_zone.SetDefaultColor(Color.CYAN);
 supply_zone.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
-plot demand_zone = if reversal > 0 and bull_candle is true then low else Double.NaN;
+plot demand_zone = if confirming_candle > 0 and bull_candle == 1 then low else Double.NaN;
 demand_zone.SetDefaultColor(Color.CYAN);
 demand_zone.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 
 AssignPriceColor(
-    if bull_candle is true and large_candle is true then
+    if bull_candle == 1 and is_large == 1 then
         Color.GREEN
-    else if bull_candle is true and large_candle is false then
+    else if bull_candle == 1 and is_large == 0 then
         Color.DARK_GREEN
-    else if bull_candle is false and large_candle is true then
+    else if bull_candle == 0 and is_large == 1 then
         Color.RED
     else
         Color.DARK_RED
