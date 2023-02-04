@@ -26,6 +26,18 @@ def larger_than_avg = candle_range >= avg_candle_size;
 def is_large;
 def confirming_candle;
 
+# Highlight large candles
+AssignPriceColor(
+    if bull_candle == 1 and is_large == 1 then
+        Color.GREEN
+    else if bull_candle == 1 and is_large == 0 then
+        Color.DARK_GREEN
+    else if bull_candle == 0 and is_large == 1 then
+        Color.RED
+    else
+        Color.DARK_RED
+);
+
 # Find large reversal candles
 if (is_large_body == 1 and larger_than_avg == 1) {
     is_large = 1;
@@ -34,10 +46,6 @@ if (is_large_body == 1 and larger_than_avg == 1) {
         with found
         while found == 0 do
             if is_large[i] == 1
-                and bull_candle == bull_candle[i]
-                    # Already confirmed
-                    then found - 1
-            else if is_large[i] == 1
                 and bull_candle == 1
                 and bull_candle[i] == 0
                 and close > high[i]
@@ -55,22 +63,11 @@ if (is_large_body == 1 and larger_than_avg == 1) {
     confirming_candle = Double.NaN;
 }
 
-plot supply_zone = if confirming_candle > 0 and bull_candle == 0 then high else Double.NaN;
-supply_zone.SetDefaultColor(Color.CYAN);
-supply_zone.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
+plot bullish_reversal = if confirming_candle > 0 and bull_candle == 1 then low else Double.NaN;
+bullish_reversal.SetDefaultColor(Color.CYAN);
+bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 
-plot demand_zone = if confirming_candle > 0 and bull_candle == 1 then low else Double.NaN;
-demand_zone.SetDefaultColor(Color.CYAN);
-demand_zone.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
-
-AssignPriceColor(
-    if bull_candle == 1 and is_large == 1 then
-        Color.GREEN
-    else if bull_candle == 1 and is_large == 0 then
-        Color.DARK_GREEN
-    else if bull_candle == 0 and is_large == 1 then
-        Color.RED
-    else
-        Color.DARK_RED
-);
+plot bearish_reversal = if confirming_candle > 0 and bull_candle == 0 then high else Double.NaN;
+bearish_reversal.SetDefaultColor(Color.CYAN);
+bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
