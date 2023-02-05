@@ -44,25 +44,25 @@ AssignPriceColor(
 );
 
 # Find large reversal candles
-if (1 == is_large_body and 1 == larger_than_avg) {
+if (is_large_body == 1 and larger_than_avg == 1) {
     is_large = 1;
 
     next_reversal = fold i = 1 to prefetch + 1
         with is_reversal
-        while 0 == is_reversal do
-            if 1 == GetValue(is_large, -i)
-                and 0 == bull_candle
-                and 1 == GetValue(bull_candle, -i)
+        while is_reversal == 0 do
+            if GetValue(is_large, -i) == 1
+                and bull_candle == 0
+                and GetValue(bull_candle, -i) == 1
                 and GetValue(close, -i) > high
                     then BarNumber() + i # Bullish reversal
-            else if 1 == GetValue(is_large, -i)
-                and 1 == bull_candle
-                and 0 == GetValue(bull_candle, -i)
+            else if GetValue(is_large, -i) == 1
+                and bull_candle == 1
+                and GetValue(bull_candle, -i) == 0
                 and GetValue(close, -i) < low
                     then BarNumber() + i # Bearish reversal
             else 0;
 
-    if (0 < next_reversal) {
+    if (next_reversal > 0) {
         is_confirmation = 1;
         confirming_candle = BarNumber();
         reversal_candle = next_reversal;
@@ -80,12 +80,12 @@ if (1 == is_large_body and 1 == larger_than_avg) {
 }
 
 # Reversal indicators
-if (1 == is_confirmation) {
+if (is_confirmation == 1) {
     is_bullish_reversal =
-        if 1 == GetValue(bull_candle, BarNumber() - next_reversal) then 1
+        if GetValue(bull_candle, BarNumber() - next_reversal) == 1 then 1
         else 0;
     is_bearish_reversal =
-        if 0 == GetValue(bull_candle, BarNumber() - next_reversal) then 1
+        if GetValue(bull_candle, BarNumber() - next_reversal) == 0 then 1
         else 0;
 } else {
     is_bullish_reversal = 0;
@@ -107,10 +107,10 @@ bearish_reversal.SetDefaultColor(Color.MAGENTA);
 def confirming_candle_value;
 def reversal_candle_value;
 
-if (1 == is_bullish_reversal) {
+if (is_bullish_reversal == 1) {
     confirming_candle_value = open;
     #reversal_candle_value = GetValue(low, BarNumber() - reversal_candle);
-} else if (1 == is_bearish_reversal) {
+} else if (is_bearish_reversal == 1) {
     confirming_candle_value = open;
     #reversal_candle_value = GetValue(high, BarNumber() - reversal_candle);
 } else {
@@ -119,7 +119,7 @@ if (1 == is_bullish_reversal) {
 }
 
 if (reversal_candle == BarNumber()) {
-    if (1 == bull_candle) {
+    if (bull_candle == 1) {
         reversal_candle_value = GetValue(low, BarNumber() - reversal_candle);
     } else {
         reversal_candle_value = GetValue(high, BarNumber() - reversal_candle);
