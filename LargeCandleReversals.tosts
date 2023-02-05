@@ -1,12 +1,13 @@
 #
 # Large Candle Reversals
 #
-# Andy Hudock <ahudock@pm.me>
+# Based on Blake Young's large candle indicator, the study highlights candles
+# having body-height the same or larger than a ATR (80% by default) and
+# bodies larger than half (by default) of the entire range, and uses them to
+# find "committed" reversals that imply potential supply and demand zones where
+# buyers have historically taken control from sellers (and vice versa).
 #
-# Based on Blake Young's large candle indicator, which highlights candles
-# having body-height the same or larger than 80% ATR (by default) and
-# bodies larger than half of the entire range, supply and demand areas
-# appear where buyers have taken control from sellers (and vice versa).
+# @author: Andy Hudock <ahudock@pm.me>
 #
 
 # Number of bars to search for large reversal candles
