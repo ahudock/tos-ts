@@ -1,1 +1,1 @@
-Custom scripts for the ThinkOrSwim trading platform.
+Custom scripts for the thinkorswim trading platform.
