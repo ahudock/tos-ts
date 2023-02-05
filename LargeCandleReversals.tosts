@@ -92,14 +92,18 @@ if (is_confirmation == 1) {
     is_bearish_reversal = 0;
 }
 
-plot bullish_reversal = if BarNumber() == reversal_candle and 1 == bull_candle then low else Double.NaN;
-bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
-bullish_reversal.SetDefaultColor(Color.CYAN);
+plot bullish_reversal = if BarNumber() == reversal_candle
+    and 1 == bull_candle then low else Double.NaN;
+        bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
+        bullish_reversal.SetDefaultColor(Color.CYAN)
+;
 #bullish_reversal.Hide();
 
-plot bearish_reversal = if BarNumber() == reversal_candle and 0 == bull_candle then high else Double.NaN;
-bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
-bearish_reversal.SetDefaultColor(Color.MAGENTA);
+plot bearish_reversal = if BarNumber() == reversal_candle
+    and 0 == bull_candle then high else Double.NaN;
+        bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
+        bearish_reversal.SetDefaultColor(Color.MAGENTA)
+;
 #bearish_reversal.Hide();
 
 # Supply and demand zones
@@ -128,10 +132,10 @@ if (reversal_candle == BarNumber()) {
     reversal_candle_value = reversal_candle_value[1];
 }
 
-AddLabel(yes, "Confirming Candle: " + confirming_candle);
-AddLabel(yes, "Next Reversal: " + next_reversal);
-AddLabel(yes, "Reversal Candle: " + reversal_candle);
-AddLabel(yes, "Reversal Candle Value: " + reversal_candle_value);
+#AddLabel(yes, "Confirming Candle: " + confirming_candle);
+#AddLabel(yes, "Next Reversal: " + next_reversal);
+#AddLabel(yes, "Reversal Candle: " + reversal_candle);
+#AddLabel(yes, "Reversal Candle Value: " + reversal_candle_value);
 
 plot reversal_zone_1 = confirming_candle_value;
 reversal_zone_1.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
