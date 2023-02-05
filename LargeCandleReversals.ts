@@ -90,22 +90,20 @@ if (1 == BarNumber()) {
 is_bullish_reversal = if 0 < is_reversal_candle and 1 == bull_candle then 1 else 0;
 is_bearish_reversal = if 0 < is_reversal_candle and 0 == bull_candle then 1 else 0;
 
-plot bullish_reversal = if 0 < is_reversal_candle and 1 == bull_candle then low else Double.NaN;
+#plot bullish_reversal = if 0 < is_reversal_candle and 1 == bull_candle then low else Double.NaN;
 bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 bullish_reversal.SetDefaultColor(Color.UPTICK);
 
-plot bearish_reversal = if 0 < is_reversal_candle and 0 == bull_candle then high else Double.NaN;
+#plot bearish_reversal = if 0 < is_reversal_candle and 0 == bull_candle then high else Double.NaN;
 bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 bearish_reversal.SetDefaultColor(Color.DOWNTICK);
 
-#
-AddLabel(yes, "Is Reversal Candle: " + is_reversal_candle);
-AddLabel(yes, "Confirming Candle: " + confirming_candle);
-AddLabel(yes, "Confirming Candle Close: " + GetValue(close, BarNumber() - confirming_candle));
-AddLabel(yes, "Reversal Candle: " + reversal_candle);
-AddLabel(yes, "Reversal Candle Open: " + GetValue(open, BarNumber() - reversal_candle));
-AddLabel(yes, "Reversal Candle Close: " + GetValue(close, BarNumber() - reversal_candle));
-#
+#AddLabel(yes, "Is Reversal Candle: " + is_reversal_candle);
+#AddLabel(yes, "Confirming Candle: " + confirming_candle);
+#AddLabel(yes, "Confirming Candle Close: " + GetValue(close, BarNumber() - confirming_candle));
+#AddLabel(yes, "Reversal Candle: " + reversal_candle);
+#AddLabel(yes, "Reversal Candle Open: " + GetValue(open, BarNumber() - reversal_candle));
+#AddLabel(yes, "Reversal Candle Close: " + GetValue(close, BarNumber() - reversal_candle));
 
 # Supply and demand zones
 def confirming_candle_value;
@@ -124,11 +122,11 @@ if (1 == is_bullish_reversal) {
 
 plot reversal_zone_1 = confirming_candle_value[-1];
 #reversal_zone_1.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
-#reversal_zone_1.SetDefaultColor(Color.CYAN);
+reversal_zone_1.SetDefaultColor(Color.CYAN);
 
 plot reversal_zone_2 = reversal_candle_value[-1];
 #reversal_zone_2.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
-#reversal_zone_2.SetDefaultColor(Color.PINK);
+reversal_zone_2.SetDefaultColor(Color.MAGENTA);
 
-AddCloud(reversal_zone_1, reversal_zone_2, Color.CYAN, Color.MAGENTA);
+AddCloud(reversal_zone_1, reversal_zone_2, Color.CYAN, Color.MAGENTA, no);
 
