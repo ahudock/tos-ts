@@ -1,12 +1,12 @@
 #
-# Supply and Demand Areas
+# Large Candle Reversals
 #
 # Andy Hudock <ahudock@pm.me>
 #
 # Based on Blake Young's large candle indicator, which highlights candles
 # having body-height the same or larger than 80% ATR (by default) and
 # bodies larger than half of the entire range, supply and demand areas
-# appear where buyers have taken control from sellers (or vice versa).
+# appear where buyers have taken control from sellers (and vice versa).
 #
 
 # Number of previous bars to search for large reversal candles
