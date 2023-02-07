@@ -24,6 +24,9 @@ input display_supply_cloud = 1;
 # Display demand cloud
 input display_demand_cloud = 1;
 
+# Display combined cloud
+input display_combined_cloud = 1;
+
 # Enable borders
 input enable_borders = 0;
 
@@ -33,15 +36,15 @@ def is_large_body            = BodyHeight() >= (candle_range * .5);
 def is_avg_candle_size       = Average(candle_range, avg_length) * atr_factor;
 def is_larger_than_avg       = candle_range >= is_avg_candle_size;
 def is_large_candle          = is_large_body && is_larger_than_avg;
+def is_confirming            = 0;
 def is_reversal;
 def reversal_type            = {default none, bearish, bullish};
 def bullish_reversal_id;
 def bullish_reversal_value;
-def bearish_reversal_id;
-def bearish_reversal_value;
-def is_confirming            = 0;
 def bullish_confirming_id;
 def bullish_confirming_value;
+def bearish_reversal_id;
+def bearish_reversal_value;
 def bearish_confirming_id;
 def bearish_confirming_value;
 plot bullish_reversal;
@@ -50,6 +53,8 @@ plot supply_1;
 plot supply_2;
 plot demand_1;
 plot demand_2;
+plot combined_1;
+plot combined_2;
 
 # Highlight large candles
 AssignPriceColor(
@@ -169,7 +174,7 @@ bearish_reversal =
     then high
     else Double.NaN;
 bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
-bearish_reversal.SetDefaultColor(Color.MAGENTA);
+bearish_reversal.SetDefaultColor(Color.CYAN);
 
 # Supply and demand zones
 if (display_supply_cloud) {
@@ -179,12 +184,12 @@ if (display_supply_cloud) {
     supply_1 = Double.NaN;
     supply_2 = Double.NaN;
 }
-supply_1.SetDefaultColor(Color.YELLOW);
-supply_2.SetDefaultColor(Color.YELLOW);
+supply_1.SetDefaultColor(Color.MAGENTA);
+supply_2.SetDefaultColor(Color.MAGENTA);
 supply_1.Hide();
 supply_2.Hide();
 
-AddCloud(supply_1, supply_2, Color.YELLOW, Color.YELLOW, enable_borders);
+AddCloud(supply_1, supply_2, Color.MAGENTA, Color.MAGENTA, enable_borders);
 
 if (display_demand_cloud) {
     demand_1 = bullish_confirming_value[-1];
@@ -193,10 +198,24 @@ if (display_demand_cloud) {
     demand_1 = Double.NaN;
     demand_2 = Double.NaN;
 }
-demand_1.SetDefaultColor(Color.CYAN);
-demand_2.SetDefaultColor(Color.CYAN);
+demand_1.SetDefaultColor(Color.YELLOW);
+demand_2.SetDefaultColor(Color.YELLOW);
 demand_1.Hide();
 demand_2.Hide();
 
-AddCloud(demand_1, demand_2, Color.CYAN, Color.CYAN, enable_borders);
+AddCloud(demand_1, demand_2, Color.YELLOW, Color.YELLOW, enable_borders);
+
+if (reversal_type == reversal_type.bullish) {
+    combined_1 = bullish_confirming_value[-1];
+    combined_2 = bullish_reversal_value[-1];
+} else {
+    combined_1 = bearish_confirming_value[-1];
+    combined_2 = bearish_reversal_value[-1];
+}
+combined_1.SetDefaultColor(Color.CYAN);
+combined_2.SetDefaultColor(Color.CYAN);
+combined_1.Hide();
+combined_2.Hide();
+
+AddCloud(combined_1, combined_2, Color.CYAN, Color.CYAN, enable_borders);
 
