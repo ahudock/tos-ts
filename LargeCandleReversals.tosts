@@ -31,7 +31,7 @@ input enable_combined_cloud = 1;
 input enable_borders = 0;
 
 # Enable supply profile
-input enable_supply_cloud = 1;
+input enable_supply_profile = 1;
 
 # Enable demand profile
 input enable_demand_profile = 1;
@@ -178,7 +178,7 @@ bearish_reversal.SetDefaultColor(Color.MAGENTA);
 plot supply_1;
 plot supply_2;
 
-if (display_supply_cloud) {
+if (enable_supply_cloud) {
     supply_1 = bearish_confirming_value[-1];
     supply_2 = bearish_reversal_value[-1];
 } else {
@@ -195,7 +195,7 @@ AddCloud(supply_1, supply_2, Color.MAGENTA, Color.MAGENTA, enable_borders);
 plot demand_1;
 plot demand_2;
 
-if (display_demand_cloud) {
+if (enable_demand_cloud) {
     demand_1 = bullish_confirming_value[-1];
     demand_2 = bullish_reversal_value[-1];
 } else {
@@ -228,14 +228,14 @@ AddCloud(combined_1, combined_2, Color.CYAN, Color.MAGENTA, enable_borders);
 
 # Profile supply and demand
 profile supply_profile = DataProfile(
-    data = bearish_reversal_value,
+    data = if enable_supply_profile then bearish_reversal_value else Double.NaN,
     onExpansion = yes,
     startNewProfile = BarNumber() != BarNumber()[1]
 );
 supply_profile.Show(Color.MAGENTA);
 
 profile demand_profile = DataProfile(
-    data = bullish_reversal_value,
+    data = if enable_demand_profile then bullish_reversal_value else Double.NaN,
     onExpansion = yes,
     startNewProfile = BarNumber() != BarNumber()[1]
 );
