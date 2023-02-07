@@ -31,10 +31,10 @@ def reversal_value;
 def is_confirming = 0;
 def confirming_id;
 def confirming_value;
+def confirmation;
+def reversal;
 plot bullish_reversal;
 plot bearish_reversal;
-plot confirmation;
-plot reversal;
 
 # Highlight large candles
 AssignPriceColor(
@@ -139,13 +139,7 @@ bearish_reversal.SetDefaultColor(Color.MAGENTA);
 #bearish_reversal.Hide();
 
 # Supply and demand zones
-#confirmation = confirming_value[-1];
-confirmation = confirming_value;
-#confirmation.SetDefaultColor(Color.MAGENTA);n
-confirmation.Hide();
+confirmation = confirming_value[-1];
+reversal = reversal_value[-1];
 
-reversal = reversal_value;
-#reversal.SetDefaultColor(Color.CYAN);
-reversal.Hide();
-
-AddCloud(confirmation, reversal, Color.Cyan, nColor.MAGENTA, no);
+AddCloud(confirmation, reversal, Color.CYAN, Color.MAGENTA, yes);
