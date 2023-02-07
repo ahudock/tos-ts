@@ -47,14 +47,6 @@ def bearish_reversal_id;
 def bearish_reversal_value;
 def bearish_confirming_id;
 def bearish_confirming_value;
-plot bullish_reversal;
-plot bearish_reversal;
-plot supply_1;
-plot supply_2;
-plot demand_1;
-plot demand_2;
-plot combined_1;
-plot combined_2;
 
 # Highlight large candles
 AssignPriceColor(
@@ -161,22 +153,25 @@ if (BarNumber() == 1) {
     bearish_confirming_value = bearish_confirming_value[1];
 }
 
-# Reversal indicators
-bullish_reversal =
+# Plot reversal indicators
+plot bullish_reversal =
     if is_reversal && reversal_type == reversal_type.bullish
     then low
     else Double.NaN;
 bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 bullish_reversal.SetDefaultColor(Color.CYAN);
 
-bearish_reversal =
+plot bearish_reversal =
     if is_reversal && reversal_type == reversal_type.bearish
     then high
     else Double.NaN;
 bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 bearish_reversal.SetDefaultColor(Color.MAGENTA);
 
-# Supply and demand zones
+# Plot supply and demand clouds
+plot supply_1;
+plot supply_2;
+
 if (display_supply_cloud) {
     supply_1 = bearish_confirming_value[-1];
     supply_2 = bearish_reversal_value[-1];
@@ -190,6 +185,9 @@ supply_1.Hide();
 supply_2.Hide();
 
 AddCloud(supply_1, supply_2, Color.MAGENTA, Color.MAGENTA, enable_borders);
+
+plot demand_1;
+plot demand_2;
 
 if (display_demand_cloud) {
     demand_1 = bullish_confirming_value[-1];
@@ -205,6 +203,9 @@ demand_2.Hide();
 
 AddCloud(demand_1, demand_2, Color.CYAN, Color.CYAN, enable_borders);
 
+plot combined_1;
+plot combined_2;
+
 if (reversal_type == reversal_type.bullish) {
     combined_1 = bullish_confirming_value[-1];
     combined_2 = bullish_reversal_value[-1];
@@ -219,3 +220,17 @@ combined_2.Hide();
 
 AddCloud(combined_1, combined_2, Color.CYAN, Color.MAGENTA, enable_borders);
 
+# Profile supply and demand
+profile supply_profile = DataProfile(
+    data = bearish_reversal_value,
+    onExpansion = yes,
+    startNewProfile = BarNumber() != BarNumber()[1]
+);
+supply_profile.Show(Color.MAGENTA);
+
+profile demand_profile = DataProfile(
+    data = bullish_reversal_value,
+    onExpansion = yes,
+    startNewProfile = BarNumber() != BarNumber()[1]
+);
+demand_profile.Show(Color.CYAN);
