@@ -18,14 +18,14 @@ input avg_length = 20;
 # Minimum percentage ATR for large candles
 input atr_factor = 0.8;
 
-# Display supply cloud
-input display_supply_cloud = 1;
+# Enable supply cloud
+input enable_supply_cloud = 1;
 
-# Display demand cloud
-input display_demand_cloud = 1;
+# Enable demand cloud
+input enable_demand_cloud = 1;
 
-# Display combined cloud
-input display_combined_cloud = 1;
+# Enable combined cloud
+input enable_combined_cloud = 1;
 
 # Enable borders
 input enable_borders = 0;
