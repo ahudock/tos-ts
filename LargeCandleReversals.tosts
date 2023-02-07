@@ -174,7 +174,7 @@ bearish_reversal =
     then high
     else Double.NaN;
 bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
-bearish_reversal.SetDefaultColor(Color.CYAN);
+bearish_reversal.SetDefaultColor(Color.MAGENTA);
 
 # Supply and demand zones
 if (display_supply_cloud) {
@@ -198,12 +198,12 @@ if (display_demand_cloud) {
     demand_1 = Double.NaN;
     demand_2 = Double.NaN;
 }
-demand_1.SetDefaultColor(Color.YELLOW);
-demand_2.SetDefaultColor(Color.YELLOW);
+demand_1.SetDefaultColor(Color.CYAN);
+demand_2.SetDefaultColor(Color.CYAN);
 demand_1.Hide();
 demand_2.Hide();
 
-AddCloud(demand_1, demand_2, Color.YELLOW, Color.YELLOW, enable_borders);
+AddCloud(demand_1, demand_2, Color.CYAN, Color.CYAN, enable_borders);
 
 if (reversal_type == reversal_type.bullish) {
     combined_1 = bullish_confirming_value[-1];
@@ -213,9 +213,9 @@ if (reversal_type == reversal_type.bullish) {
     combined_2 = bearish_reversal_value[-1];
 }
 combined_1.SetDefaultColor(Color.CYAN);
-combined_2.SetDefaultColor(Color.CYAN);
+combined_2.SetDefaultColor(Color.MAGENTA);
 combined_1.Hide();
 combined_2.Hide();
 
-AddCloud(combined_1, combined_2, Color.CYAN, Color.CYAN, enable_borders);
+AddCloud(combined_1, combined_2, Color.CYAN, Color.MAGENTA, enable_borders);
 
