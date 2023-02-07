@@ -30,6 +30,12 @@ input enable_combined_cloud = 1;
 # Enable borders
 input enable_borders = 0;
 
+# Enable supply profile
+input enable_supply_cloud = 1;
+
+# Enable demand profile
+input enable_demand_profile = 1;
+
 def candle_range             = high - low;
 def is_bull_candle           = open < close;
 def is_large_body            = BodyHeight() >= (candle_range * .5);
