@@ -1,0 +1,151 @@
+#
+# Large Candle Reversals
+#
+# Based on Blake Young's large candle indicator, the study highlights candles
+# having body-height the same or larger than ATR and bodies larger than half
+# of the entire range, and uses them to find /committed/ reversals that
+# potentially create a bias due to unsatisfied supply or demand at those levels
+#
+# @author: Andy Hudock <ahudock@pm.me>
+#
+
+# Number of bars to search for large reversal candles
+input lookback = 3;
+
+# Average length for determining large candles
+input avg_length = 20;
+
+# Minimum percentage ATR for large candles
+input atr_factor = 0.8;
+
+def candle_range        = high - low;
+def is_bull_candle      = open < close;
+def is_large_body       = BodyHeight() >= (candle_range * .5);
+def is_avg_candle_size  = Average(candle_range, avg_length) * atr_factor;
+def is_larger_than_avg  = candle_range >= is_avg_candle_size;
+def is_large_candle     = is_large_body && is_larger_than_avg;
+def is_reversal;
+def reversal_id;
+def reversal_type       = {default none, bearish, bullish};
+def reversal_value;
+def is_confirming = 0;
+def confirming_id;
+def confirming_value;
+plot bullish_reversal;
+plot bearish_reversal;
+plot confirmation;
+plot reversal;
+
+# Highlight large candles
+AssignPriceColor(
+    if is_large_candle && is_bull_candle then
+        # Large bull candle
+        Color.GREEN
+    else if ! is_large_candle && is_bull_candle then
+        # Normal bull candle
+        Color.DARK_GREEN
+    else if is_large_candle && ! is_bull_candle then
+        # Large bull candle
+        Color.RED
+    else
+        # Normal bull candle
+        Color.DARK_RED
+);
+
+# Find large reversal candles
+if (BarNumber() == 1) {
+    is_reversal = 0;
+    reversal_type = reversal_type.none;
+    reversal_id = 0;
+    reversal_value = Double.NaN;
+    confirming_id = 0;
+    confirming_value = Double.NaN;
+} else if (is_large_candle && is_bull_candle) {
+    confirming_id = fold i = 1 to lookback + 1
+        with is_bullish_reversal
+        while ! is_bullish_reversal do
+            if is_large_candle[i]
+                and ! is_bull_candle[i]
+                and close > high[i]
+                    then
+                        # Confirmed bullish reversal
+                        BarNumber() - i
+            else 0
+    ;
+
+    if (confirming_id > confirming_id[1]) {
+        is_reversal = 1;
+        reversal_type = reversal_type.bullish;
+        reversal_id = BarNumber();
+        reversal_value = low;
+        confirming_value = GetValue(open, BarNumber() - confirming_id);
+    } else {
+        is_reversal = 0;
+        reversal_id = reversal_id[1];
+        reversal_type = reversal_type[1];
+        reversal_value = reversal_value[1];
+        confirming_value = confirming_value[1];
+    }
+} else if (is_large_candle && ! is_bull_candle) {
+    confirming_id = fold j = 1 to lookback + 1
+        with is_bearish_reversal
+        while ! is_bearish_reversal do
+            if is_large_candle[j]
+                and is_bull_candle[j]
+                and close < low[j]
+                    then
+                        # Confirmed bearish reversal
+                        BarNumber() - j
+            else 0
+    ;
+
+    if (confirming_id > confirming_id[1]) {
+        is_reversal = 1;
+        reversal_type = reversal_type.bearish;
+        reversal_id = BarNumber();
+        reversal_value = high;
+        confirming_value = GetValue(open, BarNumber() - confirming_id);
+    } else {
+        is_reversal = 0;
+        reversal_id = reversal_id[1];
+        reversal_type = reversal_type[1];
+        reversal_value = reversal_value[1];
+        confirming_value = confirming_value[1];
+    }
+} else {
+    is_reversal = 0;
+    reversal_type = reversal_type[1];
+    reversal_id = reversal_id[1];
+    reversal_value = reversal_value[1];
+    confirming_id = confirming_id[1];
+    confirming_value = confirming_value[1];
+}
+
+# Reversal indicators
+bullish_reversal =
+    if is_reversal && reversal_type == reversal_type.bullish
+    then low
+    else Double.NaN;
+bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
+bullish_reversal.SetDefaultColor(Color.CYAN);
+#bullish_reversal.Hide();
+
+bearish_reversal =
+    if is_reversal && reversal_type == reversal_type.bearish
+    then high
+    else Double.NaN;
+bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
+bearish_reversal.SetDefaultColor(Color.MAGENTA);
+#bearish_reversal.Hide();
+
+# Supply and demand zones
+#confirmation = confirming_value[-1];
+confirmation = confirming_value;
+#confirmation.SetDefaultColor(Color.MAGENTA);n
+confirmation.Hide();
+
+reversal = reversal_value;
+#reversal.SetDefaultColor(Color.CYAN);
+reversal.Hide();
+
+AddCloud(confirmation, reversal, Color.Cyan, nColor.MAGENTA, no);
