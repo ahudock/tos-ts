@@ -111,8 +111,8 @@ if (BarNumber() == 1) {
         bullish_confirming_value = bullish_confirming_value[1];
     }
     bearish_reversal_id = bearish_reversal_id[1];
-    bearish_reversal_value = bearish_reversal_value[1];
     bearish_confirming_id = bearish_confirming_id[1];
+    bearish_reversal_value = bearish_reversal_value[1];
     bearish_confirming_value = bearish_confirming_value[1];
 } else if (is_large_candle && ! is_bull_candle) {
     # Large bearish candle
@@ -163,14 +163,16 @@ if (BarNumber() == 1) {
 plot bullish_reversal =
     if is_reversal && reversal_type == reversal_type.bullish
     then low
-    else Double.NaN;
+    else Double.NaN
+;
 bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 bullish_reversal.SetDefaultColor(Color.CYAN);
 
 plot bearish_reversal =
     if is_reversal && reversal_type == reversal_type.bearish
     then high
-    else Double.NaN;
+    else Double.NaN
+;
 bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 bearish_reversal.SetDefaultColor(Color.MAGENTA);
 
@@ -178,7 +180,7 @@ bearish_reversal.SetDefaultColor(Color.MAGENTA);
 plot supply_1;
 plot supply_2;
 
-if (enable_supply_cloud) {
+if (enable_supply_cloud && ! IsNaN(open)) {
     supply_1 = bearish_confirming_value[-1];
     supply_2 = bearish_reversal_value[-1];
 } else {
@@ -195,7 +197,7 @@ AddCloud(supply_1, supply_2, Color.MAGENTA, Color.MAGENTA, enable_borders);
 plot demand_1;
 plot demand_2;
 
-if (enable_demand_cloud) {
+if (enable_demand_cloud && ! IsNaN(open)) {
     demand_1 = bullish_confirming_value[-1];
     demand_2 = bullish_reversal_value[-1];
 } else {
@@ -212,12 +214,17 @@ AddCloud(demand_1, demand_2, Color.CYAN, Color.CYAN, enable_borders);
 plot combined_1;
 plot combined_2;
 
-if (reversal_type == reversal_type.bullish) {
-    combined_1 = bullish_confirming_value[-1];
-    combined_2 = bullish_reversal_value[-1];
+if (enable_combined_cloud && ! IsNaN(open)) {
+    if (reversal_type == reversal_type.bullish) {
+        combined_1 = bullish_confirming_value[-1];
+        combined_2 = bullish_reversal_value[-1];
+    } else {
+        combined_1 = bearish_confirming_value[-1];
+        combined_2 = bearish_reversal_value[-1];
+    }
 } else {
-    combined_1 = bearish_confirming_value[-1];
-    combined_2 = bearish_reversal_value[-1];
+    combined_1 = Double.NaN;
+    combined_2 = Double.NaN;
 }
 combined_1.SetDefaultColor(Color.CYAN);
 combined_2.SetDefaultColor(Color.MAGENTA);
@@ -228,14 +235,14 @@ AddCloud(combined_1, combined_2, Color.CYAN, Color.MAGENTA, enable_borders);
 
 # Profile supply and demand
 profile supply_profile = DataProfile(
-    data = if enable_supply_profile then bearish_reversal_value else Double.NaN,
+    data = if enable_supply_profile then bearish_reversal else Double.NaN,
     onExpansion = yes,
     startNewProfile = BarNumber() != BarNumber()[1]
 );
 supply_profile.Show(Color.MAGENTA);
 
 profile demand_profile = DataProfile(
-    data = if enable_demand_profile then bullish_reversal_value else Double.NaN,
+    data = if enable_demand_profile then bullish_reversal else Double.NaN,
     onExpansion = yes,
     startNewProfile = BarNumber() != BarNumber()[1]
 );
