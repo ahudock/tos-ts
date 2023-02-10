@@ -3,9 +3,7 @@
 # v1.0.0
 #
 # This study highlights candles having a body-height the same or larger than ATR
-# and larger than half of the entire range, and uses them to find /committed/
-# reversals that potentially create a bias due to unsatisfied supply or demand
-# at those levels.
+# and larger than half of the entire range.
 #
 # @author: Andy Hudock <ahudock@pm.me>
 #   based on Blake Young's large candle study
