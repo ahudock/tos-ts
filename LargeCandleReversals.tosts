@@ -2,7 +2,7 @@
 # Large Candle Reversals
 # v1.0.0
 #
-# This study highlights candles with body heights the same as or larger than ATR
+# Highlights candles with body heights the same as or larger than ATR
 # and larger than half of the entire range, and uses them to find /committed/
 # reversals that potentially create a bias due to unsatisfied supply
 # or demand at those levels.

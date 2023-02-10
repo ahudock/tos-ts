@@ -2,7 +2,7 @@
 # Large Candles
 # v1.0.0
 #
-# This study highlights candles having a body-height the same or larger than ATR
+# Highlights candles having a body-height the same or larger than ATR
 # and larger than half of the entire range.
 #
 # @author: Andy Hudock <ahudock@pm.me>
