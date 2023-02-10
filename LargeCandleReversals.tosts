@@ -1,10 +1,26 @@
 #
 # Large Candle Reversals
 #
-# Based on Blake Young's large candle indicator, the study highlights candles
-# having body-height the same or larger than ATR and bodies larger than half
+# Based on Blake Young's large candle indicator, this study highlights candles
+# having a body-height the same or larger than ATR and larger than half
 # of the entire range, and uses them to find /committed/ reversals that
-# potentially create a bias due to unsatisfied supply or demand at those levels
+# potentially create a bias due to unsatisfied supply or demand at those levels.
+#
+# The bullish and bearish reversal indicators mark large bullish or bearish
+# reversals, where buyers have overcome sellers (or vice versa).
+#
+# Supply/demand clouds are drawn from the open of the reversal-confirming candle
+# to the low of the bullish reversal candle (if buyers/demand)
+# or high of a bearish revesal candle (if sellers/suply).
+#
+# The supply cloud displays only bearish reversals, whereas the demand cloud
+# displays only bullish reversals.
+#
+# The combined cloud (disabled by default) displays both supply and demand
+# areas with a single cloud.
+#
+# The supply and demand profiles aggregate bullish and bearish reversals
+# and display them in the extended chart.
 #
 # @author: Andy Hudock <ahudock@pm.me>
 #
@@ -25,7 +41,7 @@ input enable_supply_cloud = 1;
 input enable_demand_cloud = 1;
 
 # Enable combined cloud
-input enable_combined_cloud = 1;
+input enable_combined_cloud = 0;
 
 # Enable borders
 input enable_borders = 0;
@@ -102,7 +118,9 @@ if (BarNumber() == 1) {
         reversal_type = reversal_type.bullish;
         bullish_reversal_id = BarNumber();
         bullish_reversal_value = low;
-        bullish_confirming_value = GetValue(open, BarNumber() - bullish_confirming_id);
+        bullish_confirming_value = GetValue(
+            open, BarNumber() - bullish_confirming_id
+        );
     } else {
         is_reversal = 0;
         reversal_type = reversal_type[1];
@@ -133,7 +151,9 @@ if (BarNumber() == 1) {
         reversal_type = reversal_type.bearish;
         bearish_reversal_id = BarNumber();
         bearish_reversal_value = high;
-        bearish_confirming_value = GetValue(open, BarNumber() - bearish_confirming_id);
+        bearish_confirming_value = GetValue(
+            open, BarNumber() - bearish_confirming_id
+        );
     } else {
         is_reversal = 0;
         bearish_reversal_id = bearish_reversal_id[1];
@@ -234,16 +254,24 @@ combined_2.Hide();
 AddCloud(combined_1, combined_2, Color.CYAN, Color.MAGENTA, enable_borders);
 
 # Profile supply and demand
+def start_new_profile = BarNumber() != BarNumber()[1];
+def price_per_row = PricePerRow.AUTOMATIC;
+def value_area_profile = 100;
+
 profile supply_profile = DataProfile(
     data = if enable_supply_profile then bearish_reversal else Double.NaN,
     onExpansion = yes,
-    startNewProfile = BarNumber() != BarNumber()[1]
+    startNewProfile = start_new_profile,
+    "value area percent" = value_area_profile,
+    pricePerRow = price_per_row
 );
 supply_profile.Show(Color.MAGENTA);
 
 profile demand_profile = DataProfile(
     data = if enable_demand_profile then bullish_reversal else Double.NaN,
     onExpansion = yes,
-    startNewProfile = BarNumber() != BarNumber()[1]
+    startNewProfile = start_new_profile,
+    "value area percent" = value_area_profile,
+    pricePerRow = price_per_row
 );
 demand_profile.Show(Color.CYAN);
