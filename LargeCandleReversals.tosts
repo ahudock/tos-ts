@@ -1,13 +1,14 @@
 #
 # Large Candle Reversals
+# v1.0.0
 #
-# Based on Blake Young's large candle indicator, this study highlights candles
-# having a body-height the same or larger than ATR and larger than half
-# of the entire range, and uses them to find /committed/ reversals that
-# potentially create a bias due to unsatisfied supply or demand at those levels.
+# This study highlights candles having a bodies the same as or larger than ATR
+# and larger than half of the entire range, and uses them to find /committed/
+# reversals that potentially create a bias due to unsatisfied supply
+# or demand at those levels.
 #
-# The bullish and bearish reversal indicators mark large bullish or bearish
-# reversals, where buyers have overcome sellers (or vice versa).
+# The bullish and bearish reversal indicators mark large candle reversals,
+# where buyers have overcome sellers (or vice versa).
 #
 # Supply/demand clouds are drawn from the open of the reversal-confirming candle
 # to the low of the bullish reversal candle (if buyers/demand)

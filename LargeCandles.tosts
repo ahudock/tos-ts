@@ -1,5 +1,6 @@
 #
 # Large Candles
+# v1.0.0
 #
 # This study highlights candles having a body-height the same or larger than ATR
 # and larger than half of the entire range, and uses them to find /committed/
