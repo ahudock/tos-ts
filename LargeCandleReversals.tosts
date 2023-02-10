@@ -25,7 +25,7 @@
 # @author: Andy Hudock <ahudock@pm.me>
 #
 
-# Number of bars to search for large reversal candles
+# Maximum number of bars allowed between reversal and confirmation condles
 input lookback = 3;
 
 # Average length for determining large candles
@@ -70,20 +70,32 @@ def bearish_reversal_value;
 def bearish_confirming_id;
 def bearish_confirming_value;
 
+# Large bullish candle color
+DefineGlobalColor("large uptick", Color.GREEN);
+
+# Normal bullish candle color
+DefineGlobalColor("normal uptick", Color.DARK_GREEN);
+
+# Large bearish candle color
+DefineGlobalColor("large downtick", Color.RED);
+
+# Normal bearish candle color
+DefineGlobalColor("normal downtick", Color.DARK_RED);
+
 # Highlight large candles
 AssignPriceColor(
     if is_large_candle && is_bull_candle then
-        # Large bull candle
-        Color.GREEN
+        # Large bullish candle
+        GlobalColor("large uptick")
     else if ! is_large_candle && is_bull_candle then
-        # Normal bull candle
-        Color.DARK_GREEN
+        # Normal bullish candle
+        GlobalColor("normal uptick")
     else if is_large_candle && ! is_bull_candle then
-        # Large bull candle
-        Color.RED
+        # Large bearish candle
+        GlobalColor("large downtick")
     else
-        # Normal bull candle
-        Color.DARK_RED
+        # Normal bearish candle
+        GlobalColor("normal downtick")
 );
 
 # Find large reversal candles

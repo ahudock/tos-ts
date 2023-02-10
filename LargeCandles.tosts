@@ -1,18 +1,52 @@
 #
-# Blake Young's Large Candle indicator
+# Large Candles
+#
+# This study highlights candles having a body-height the same or larger than ATR
+# and larger than half of the entire range, and uses them to find /committed/
+# reversals that potentially create a bias due to unsatisfied supply or demand
+# at those levels.
+#
+# @author: Andy Hudock <ahudock@pm.me>
+#   based on Blake Young's large candle study
 #
 
-input length = 20;
-input factor = 0.8;
+# Average length for determining large candles
+input avg_length = 20;
 
-def candle_range = high - low;
-def bull_candle = open < close;
-def large_body = BodyHeight() >= (candle_range * .5);
+# Minimum percentage ATR for large candles
+input atr_factor = 0.8;
 
-def avg_candle = Average(candle_range, length) * factor;
-def larger_candle = candle_range >= avg_candle;
+# Large bullish candle color
+DefineGlobalColor("large uptick", Color.GREEN);
 
-AssignPriceColor(if bull_candle is true and large_body is true and larger_candle is true then
-    Color.GREEN else if bull_candle is true and (large_body is false or larger_candle is false) then
-    Color.DARK_GREEN else if bull_candle is false and large_body is true and larger_candle is true then
-    Color.RED else Color.DARK_RED);
+# Normal bullish candle color
+DefineGlobalColor("normal uptick", Color.DARK_GREEN);
+
+# Large bearish candle color
+DefineGlobalColor("large downtick", Color.RED);
+
+# Normal bearish candle color
+DefineGlobalColor("normal downtick", Color.DARK_RED);
+
+def candle_range        = high - low;
+def is_bull_candle      = open < close;
+def is_large_body       = BodyHeight() >= (candle_range * .5);
+def is_avg_candle_size  = Average(candle_range, avg_length) * atr_factor;
+def is_larger_than_avg  = candle_range >= is_avg_candle_size;
+def is_large_candle     = is_large_body && is_larger_than_avg;
+
+# Highlight large candles
+AssignPriceColor(
+    if is_large_candle && is_bull_candle then
+        # Large bullish candle
+        GlobalColor("large uptick")
+    else if ! is_large_candle && is_bull_candle then
+        # Normal bullish candle
+        GlobalColor("normal uptick")
+    else if is_large_candle && ! is_bull_candle then
+        # Large bearish candle
+        GlobalColor("large downtick")
+    else
+        # Normal bearish candle
+        GlobalColor("normal downtick")
+);
