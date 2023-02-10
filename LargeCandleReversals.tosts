@@ -253,7 +253,7 @@ combined_2.Hide();
 
 AddCloud(combined_1, combined_2, Color.CYAN, Color.MAGENTA, enable_borders);
 
-# Profile supply and demand
+# Profile bullish/bearish reversals
 def start_new_profile = BarNumber() != BarNumber()[1];
 def price_per_row = PricePerRow.AUTOMATIC;
 def value_area_profile = 100;
