@@ -1,13 +1,13 @@
 #
-# Large Candle Reversals
+# One Candle Reversals
 # v1.0.0
 #
 # Highlights candles with body heights the same as or larger than ATR
 # and larger than half of the entire range, and uses them to find /committed/
-# reversals that potentially create a bias due to unsatisfied supply
-# or demand at those levels.
+# reversals that potentially signal a change in the prevailing trend
+# and/or create future bias due to unsatisfied supply or demand at those levels.
 #
-# The bullish and bearish reversal indicators mark large candle reversals,
+# The bullish and bearish reversal indicators mark large candle reversals
 # where buyers have overcome sellers or vice versa.
 #
 # The supply and demand clouds are drawn from the open of a reversal-confirming
@@ -22,7 +22,8 @@
 #
 # The supply and demand profiles plot bullish and bearish reversals.
 #
-# @author: Andy Hudock <ahudock@pm.me>
+# @author: Andy Hudock (@mars) <ahudock@pm.me>
+#   based on Blake Young's large candle study and one candle reversal logic
 #
 
 # Maximum number of bars allowed between reversal and confirmation condles
