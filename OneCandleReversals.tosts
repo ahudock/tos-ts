@@ -1,24 +1,22 @@
 #
-# One Candle Reversals
+# One-candle Reversals
 # v1.0.0
 #
 # Highlights candles with body heights the same as or larger than ATR
 # and larger than half of the entire range, and uses them to find /committed/
 # reversals that potentially signal a change in the prevailing trend
-# and/or create future bias due to unsatisfied supply or demand at those levels.
+# and/or create future bias due to unsatisfied supply or demand.
 #
-# The bullish and bearish reversal indicators mark large candle reversals
+# The bullish and bearish reversal indicators mark large one-candle reversals
 # where buyers have overcome sellers or vice versa.
 #
 # The supply and demand clouds are drawn from the open of a reversal-confirming
 # candle to the low of a bullish reversal candle (if buyers/demand)
 # or high of a bearish revesal candle (if sellers/supply).
 #
-# The supply cloud displays only bearish reversals, whereas the demand cloud
-# displays only bullish reversals.
-#
-# The combined cloud -- which is disabled by default -- displays both bullish
-# and bearish reversal areas using a single cloud.
+# The supply cloud displays only bearish reversals, the demand cloud only
+# bullish reversals. The combined cloud (disabled by default) displays both
+# bullish and bearish large one-candle reversal areas using a single cloud.
 #
 # The supply and demand profiles plot bullish and bearish reversals.
 #
@@ -26,7 +24,7 @@
 #   based on Blake Young's large candle study and one candle reversal logic
 #
 
-# Maximum number of bars allowed between reversal and confirmation condles
+# Maximum number of bars allowed between large reversal and confirmation condles
 input lookback = 3;
 
 # Average length for determining large candles
@@ -35,23 +33,26 @@ input avg_length = 20;
 # Minimum percentage ATR for large candles
 input atr_factor = 0.8;
 
-# Enable supply cloud
-input enable_supply_cloud = 1;
+# Enable reversal indicator plots
+input enable_reversal_indicators = yes;
 
-# Enable demand cloud
-input enable_demand_cloud = 1;
+# Enable supply (sellers) cloud
+input enable_supply_cloud = yes;
 
-# Enable combined cloud
-input enable_combined_cloud = 0;
+# Enable demand (buyers) cloud
+input enable_demand_cloud = yes;
 
-# Enable borders
-input enable_borders = 0;
+# Enable combined (buyers and sellers) cloud
+input enable_combined_cloud = no;
+
+# Enable supply/demand cloud borders
+input enable_borders = no;
 
 # Enable supply profile
-input enable_supply_profile = 1;
+input enable_supply_profile = yes;
 
 # Enable demand profile
-input enable_demand_profile = 1;
+input enable_demand_profile = yes;
 
 def candle_range             = high - low;
 def is_bull_candle           = open < close;
@@ -127,6 +128,7 @@ if (BarNumber() == 1) {
     ;
 
     if (bullish_confirming_id > bullish_confirming_id[1]) {
+        # Confirmed bullish reversal
         is_reversal = 1;
         reversal_type = reversal_type.bullish;
         bullish_reversal_id = BarNumber();
@@ -160,6 +162,7 @@ if (BarNumber() == 1) {
     ;
 
     if (bearish_confirming_id > bearish_confirming_id[1]) {
+        # Confirmed bearish reversal
         is_reversal = 1;
         reversal_type = reversal_type.bearish;
         bearish_reversal_id = BarNumber();
@@ -200,6 +203,7 @@ plot bullish_reversal =
 ;
 bullish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 bullish_reversal.SetDefaultColor(Color.CYAN);
+bullish_reversal.SetHiding(if enable_reversal_indicators then 0 else 1);
 
 plot bearish_reversal =
     if is_reversal && reversal_type == reversal_type.bearish
@@ -208,6 +212,7 @@ plot bearish_reversal =
 ;
 bearish_reversal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 bearish_reversal.SetDefaultColor(Color.MAGENTA);
+bearish_reversal.SetHiding(if enable_reversal_indicators then 0 else 1);
 
 # Plot supply and demand clouds
 plot supply_1;
@@ -220,8 +225,10 @@ if (enable_supply_cloud && ! IsNaN(open)) {
     supply_1 = Double.NaN;
     supply_2 = Double.NaN;
 }
+
 supply_1.SetDefaultColor(Color.MAGENTA);
 supply_2.SetDefaultColor(Color.MAGENTA);
+
 supply_1.Hide();
 supply_2.Hide();
 
@@ -237,8 +244,10 @@ if (enable_demand_cloud && ! IsNaN(open)) {
     demand_1 = Double.NaN;
     demand_2 = Double.NaN;
 }
+
 demand_1.SetDefaultColor(Color.CYAN);
 demand_2.SetDefaultColor(Color.CYAN);
+
 demand_1.Hide();
 demand_2.Hide();
 
@@ -259,8 +268,10 @@ if (enable_combined_cloud && ! IsNaN(open)) {
     combined_1 = Double.NaN;
     combined_2 = Double.NaN;
 }
+
 combined_1.SetDefaultColor(Color.CYAN);
 combined_2.SetDefaultColor(Color.MAGENTA);
+
 combined_1.Hide();
 combined_2.Hide();
 
