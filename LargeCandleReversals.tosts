@@ -2,26 +2,25 @@
 # Large Candle Reversals
 # v1.0.0
 #
-# This study highlights candles having a bodies the same as or larger than ATR
+# This study highlights candles with body heights the same as or larger than ATR
 # and larger than half of the entire range, and uses them to find /committed/
 # reversals that potentially create a bias due to unsatisfied supply
 # or demand at those levels.
 #
 # The bullish and bearish reversal indicators mark large candle reversals,
-# where buyers have overcome sellers (or vice versa).
+# where buyers have overcome sellers or vice versa.
 #
-# Supply/demand clouds are drawn from the open of the reversal-confirming candle
-# to the low of the bullish reversal candle (if buyers/demand)
-# or high of a bearish revesal candle (if sellers/suply).
+# The supply and demand clouds are drawn from the open of a reversal-confirming
+# candle to the low of a bullish reversal candle (if buyers/demand)
+# or high of a bearish revesal candle (if sellers/supply).
 #
 # The supply cloud displays only bearish reversals, whereas the demand cloud
 # displays only bullish reversals.
 #
-# The combined cloud (disabled by default) displays both supply and demand
-# areas with a single cloud.
+# The combined cloud -- which is disabled by default -- displays both bullish
+# and bearish reversal areas using a single cloud.
 #
-# The supply and demand profiles aggregate bullish and bearish reversals
-# and display them in the extended chart.
+# The supply and demand profiles plot bullish and bearish reversals.
 #
 # @author: Andy Hudock <ahudock@pm.me>
 #
