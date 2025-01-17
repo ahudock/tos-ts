@@ -1,0 +1,597 @@
+##############################
+# Monkey Bar Section
+# TOS MB study used copyright TD Ameritrade
+# version : 1.0 
+# Chris Glander author
+##########
+# version : 1.1, 1.2 minor bug revisions
+##########
+# version : 1.3 
+#   1) added rounding to the ticksize for all values
+#   2) placed bubbles in last period into the expansion area in order to see the last data bar
+##########
+# version : 1.4
+#   1) multiple changes to make production ready
+##########
+# version : 1.5
+#   1) allow for the use of the previous period Fibs if needed
+#   2) use color names versus GetColor numbers
+# version : 1.51
+#   1) moved last set of Fib Bubbles to furthest right in expansion area without using an offset
+##############################
+
+declare once_per_bar;
+input useYest_Fibs_again = no;
+input aggregationPeriod = {"1 min", "2 min", "3 min", "4 min", "5 min", "10 min", "15 min", "20 min", default "30 min", "1 hour", "2 hours", "4 hours", "Day", "2 Days", "3 Days", "4 Days", "Week", "Month", "Quarter", "Year"};
+input timePerProfile = {CHART, MINUTE, HOUR, default DAY, WEEK, MONTH, "OPT EXP", BAR, YEAR};
+# show or not show the current day Fibs
+input show_Current_Period_Fibs = yes;
+input showOnlyLastPeriod = no;
+# all colors based on GetColor constants 0 - 9
+input Fibs_Color = {default "Neon Salmon", "Cyan", "Purple", "Light Gray", "Yellow", "Orange", "Green", "Gray", "Light Yellow", "White"};
+# whether to show prices and percent of the Fib
+input show_Fib_bubbles = yes;
+# upward extension of some Fibs from the main set
+input dupe_Fibs_up = yes;
+# downward extension of some Fibs from the main set
+input dupe_Fibs_down = yes;
+# This shows the prior day data and Fibs used to generate current day data
+input showInitFibData = no;
+input showInitFibs = no;
+input Fibs_Init_Color = {"Neon Salmon", "Cyan", "Purple", "Light Gray", "Yellow", default "Orange", "Green", "Gray", "Light Yellow", "White"};
+input showClouds = yes;
+# do not modify below here
+input pricePerRowHeightMode = {default AUTOMATIC, TICKSIZE, CUSTOM};
+input customRowHeight = .25;
+input multiplier = 1;
+input onExpansion = no;
+input profiles = 10000;
+input showMonkeyBar = no;
+input showThePlayground = no;
+input thePlaygroundPercent = 1;
+# opacity change to 40% or more to see monkeybars
+input opacity = 0;
+input emphasizeFirstDigit = no;
+input markOpenPrice = no;
+input markClosePrice = no;
+input volumeShowStyle = MonkeyVolumeShowStyle.NONE;
+input showVolumeVA = no;
+input showVolumePoc = no;
+input theVolumePercent = 70;
+input showInitialBalance = no;
+input initialBalanceRange = 3;
+input MB_calc_or_mid = {default MID, CALC};
+
+script Math {
+    input value = 0.00;
+    plot MRound = Round(value / TickSize(), 0) * TickSize();
+}
+
+def na = Double.NaN;
+def bn = BarNumber();
+def period;
+def yyyymmdd = GetYYYYMMDD();
+def seconds = SecondsFromTime(0);
+def year = GetYear();
+def month = year * 12 + GetMonth();
+def day_number = DaysFromDate(First(yyyymmdd)) + GetDayOfWeek(First(yyyymmdd));
+def dom = GetDayOfMonth(yyyymmdd);
+def dow = GetDayOfWeek(yyyymmdd - dom + 1);
+def expthismonth = (if dow > 5 then 27 else 20) - dow;
+def exp_opt = month + (dom > expthismonth);
+def periodMin = Floor(seconds / 60 + day_number * 24 * 60);
+def periodHour = Floor(seconds / 3600 + day_number * 24);
+def periodDay = CountTradingDays(Min(First(yyyymmdd), yyyymmdd), yyyymmdd) - 1;
+def periodWeek = Floor(day_number / 7);
+def periodMonth = month - First(month);
+def periodQuarter = Ceil(month / 3) - First(Ceil(month / 3));
+def periodYear = year - First(year);
+
+def Fib_Color;
+switch (Fibs_Color) {
+case "Neon Salmon":
+    Fib_Color = 2;
+case "Cyan":
+    Fib_Color = 1;
+case "Purple":
+    Fib_Color = 0;
+case "Light Gray":
+    Fib_Color = 3;
+case "Yellow":
+    Fib_Color = 4;
+case "Orange":
+    Fib_Color = 5;
+case "Green":
+    Fib_Color = 6;
+case "Gray":
+    Fib_Color = 7;
+case "Light Yellow":
+    Fib_Color = 8;
+case "White":
+    Fib_Color = 9;
+}
+
+def Fib_Init_Color;
+switch (Fibs_Init_Color) {
+case "Neon Salmon":
+    Fib_Init_Color = 2;
+case "Cyan":
+    Fib_Init_Color = 1;
+case "Purple":
+    Fib_Init_Color = 0;
+case "Light Gray":
+    Fib_Init_Color = 3;
+case "Yellow":
+    Fib_Init_Color = 4;
+case "Orange":
+    Fib_Init_Color = 5;
+case "Green":
+    Fib_Init_Color = 6;
+case "Gray":
+    Fib_Init_Color = 7;
+case "Light Yellow":
+    Fib_Init_Color = 8;
+case "White":
+    Fib_Init_Color = 9;
+}
+
+switch (timePerProfile) {
+case CHART:
+    period = 0;
+case MINUTE:
+    period = periodMin;
+case HOUR:
+    period = periodHour;
+case DAY:
+    period = periodDay;
+case WEEK:
+    period = periodWeek;
+case MONTH:
+    period = periodMonth;
+case "OPT EXP":
+    period = exp_opt - First(exp_opt);
+case BAR:
+    period = BarNumber() - 1;
+case YEAR:
+    period = periodYear;
+}
+
+def count = CompoundValue(1, if period != period[1] then (GetValue(count, 1) + period - period[1]) % multiplier else GetValue(count, 1), 0);
+def cond = CompoundValue(1, count < count[1] + period - period[1], yes);
+
+#plot cnd = cond;
+
+def height;
+switch (pricePerRowHeightMode) {
+case AUTOMATIC:
+    height = PricePerRow.AUTOMATIC;
+case TICKSIZE:
+    height = PricePerRow.TICKSIZE;
+case CUSTOM:
+    height = customRowHeight;
+}
+
+def timeInterval;
+def aggMultiplier;
+switch (aggregationPeriod) {
+case "1 min":
+    timeInterval = periodMin;
+    aggMultiplier = 1;
+case "2 min":
+    timeInterval = periodMin;
+    aggMultiplier = 2;
+case "3 min":
+    timeInterval = periodMin;
+    aggMultiplier = 3;
+case "4 min":
+    timeInterval = periodMin;
+    aggMultiplier = 4;
+case "5 min":
+    timeInterval = periodMin;
+    aggMultiplier = 5;
+case "10 min":
+    timeInterval = periodMin;
+    aggMultiplier = 10;
+case "15 min":
+    timeInterval = periodMin;
+    aggMultiplier = 15;
+case "20 min":
+    timeInterval = periodMin;
+    aggMultiplier = 20;
+case "30 min":
+    timeInterval = periodMin;
+    aggMultiplier = 30;
+case "1 hour":
+    timeInterval = periodHour;
+    aggMultiplier = 1;
+case "2 hours":
+    timeInterval = periodHour;
+    aggMultiplier = 2;
+case "4 hours":
+    timeInterval = periodHour;
+    aggMultiplier = 4;
+case "Day":
+    timeInterval = periodDay;
+    aggMultiplier = 1;
+case "2 Days":
+    timeInterval = periodDay;
+    aggMultiplier = 2;
+case "3 Days":
+    timeInterval = periodDay;
+    aggMultiplier = 3;
+case "4 Days":
+    timeInterval = periodDay;
+    aggMultiplier = 4;
+case "Week":
+    timeInterval = periodWeek;
+    aggMultiplier = 1;
+case "Month":
+    timeInterval = periodMonth;
+    aggMultiplier = 1;
+case "Quarter":
+    timeInterval = periodQuarter;
+    aggMultiplier = 1;
+case "Year":
+    timeInterval = periodYear;
+    aggMultiplier = 1;
+}
+
+def agg_count = CompoundValue(1, if timeInterval != timeInterval[1] then (GetValue(agg_count, 1) + timeInterval - timeInterval[1]) % aggMultiplier else GetValue(agg_count, 1), 0);
+def agg_cond = CompoundValue(1,  agg_count < agg_count[1] + timeInterval - timeInterval[1], yes);
+def digit = CompoundValue(1, if cond then 1 else agg_cond + GetValue(digit, 1), 1);
+
+profile monkey = MonkeyBars(digit, "startNewProfile" = cond, "onExpansion" = onExpansion,
+"numberOfProfiles" = profiles, "pricePerRow" = height, "the playground percent" = thePlaygroundPercent,
+"emphasize first digit" = emphasizeFirstDigit, "volumeProfileShowStyle" = volumeShowStyle, "volumePercentVA" = theVolumePercent,
+"show initial balance" = showInitialBalance, "initial balance range" = initialBalanceRange);
+
+def con = CompoundValue(1, onExpansion, no);
+def mbar = Math(CompoundValue(1, if IsNaN(monkey.GetPointOfControl()) and con then GetValue(mbar, 1) else monkey.GetPointOfControl(), monkey.GetPointOfControl())).MRound;
+def hPG =  Math(CompoundValue(1, if IsNaN(monkey.GetHighestValueArea()) and con then GetValue(hPG, 1) else monkey.GetHighestValueArea(), monkey.GetHighestValueArea())).MRound;
+def lPG =  Math(CompoundValue(1, if IsNaN(monkey.GetLowestValueArea()) and con then GetValue(lPG, 1) else monkey.GetLowestValueArea(), monkey.GetLowestValueArea())).MRound;
+def mPG =  Math((hPG + lPG) * .5).MRound;
+def mb_used = if MB_calc_or_mid == MB_calc_or_mid."MID" then mPG else mbar;
+def hProfile = Math(CompoundValue(1, if IsNaN(monkey.GetHighest()) and con then GetValue(hProfile, 1) else monkey.GetHighest(), monkey.GetHighest())).MRound;
+def lProfile = Math(CompoundValue(1, if IsNaN(monkey.GetLowest()) and con then GetValue(lProfile, 1) else monkey.GetLowest(), monkey.GetLowest())).MRound;
+def midProfile = Math((hProfile + lProfile) * .5).MRound;
+def rgProfile = hProfile - lProfile;
+
+def isNew = mbar != mbar[1] or mPG != mPG[1] or midProfile != midProfile[1];
+def isNewbn = if isNew then bn else isNewbn[1];
+def highestNewbn = HighestAll(isNewbn);
+def highest_bn = HighestAll(bn);
+def inLastPeriod = if useYest_Fibs_again then bn >= highestNewbn else bn > highestNewbn;
+def last_data_bar = if !IsNaN(close) and IsNaN(close[-1]) then bn else last_data_bar[1];
+#def highest_db = HighestAll(last_data_bar) + offset;
+def use_prev_fibs = inLastPeriod and useYest_Fibs_again;
+
+plot ProfileHigh = if showInitFibData then hProfile else na;
+plot ProfileLow = if showInitFibData then lProfile else na;
+plot ProfileMid = if showInitFibData then midProfile else na;
+plot ProfileRange = if showInitFibData then rgProfile else na;
+plot PGHigh = if showInitFibData then hPG else na;
+plot PGLow = if showInitFibData then lPG else na;
+plot MB_Calc = if showInitFibData then mbar else na;
+plot PGMid =  if showInitFibData then mPG else na;
+plot MB = if showInitFibData then mb_used else na;
+MB.SetHiding(!showInitFibData);
+ProfileHigh.SetHiding(!showInitFibData);
+ProfileLow.SetHiding(!showInitFibData);
+ProfileMid.SetHiding(!showInitFibData);
+DefineGlobalColor("Monkey Bar", GetColor(4));
+DefineGlobalColor("The Playground", GetColor(3));
+DefineGlobalColor("Open Price", GetColor(1));
+DefineGlobalColor("Close Price", GetColor(1));
+DefineGlobalColor("Volume", GetColor(8));
+DefineGlobalColor("Volume Value Area", GetColor(2));
+DefineGlobalColor("Volume Point of Control", GetColor(3));
+DefineGlobalColor("Initial Balance", GetColor(7));
+
+monkey.Show(Color.RED, if showMonkeyBar then GlobalColor("Monkey Bar") else Color.CURRENT,
+ if showThePlayground then GlobalColor("The Playground") else Color.CURRENT,
+ opacity, if markOpenPrice then GlobalColor("Open Price") else Color.CURRENT,
+ if markClosePrice then GlobalColor("Close Price") else Color.CURRENT,
+ if showInitialBalance then GlobalColor("Initial Balance") else Color.CURRENT,
+ GlobalColor("Volume"),
+ if showVolumeVA then GlobalColor("Volume Value Area") else Color.CURRENT,
+ if showVolumePoc then GlobalColor("Volume Point of Control") else Color.CURRENT);
+MB.SetDefaultColor(GlobalColor("Monkey Bar"));
+MB.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+PGHigh.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+PGLow.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+PGHigh.SetDefaultColor(GlobalColor("The Playground"));
+PGLow.SetDefaultColor(GlobalColor("The Playground"));
+ProfileHigh.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+ProfileLow.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+ProfileHigh.SetDefaultColor(GetColor(3));
+ProfileLow.SetDefaultColor(GetColor(3));
+ProfileMid.SetDefaultColor(GetColor(9));
+
+AddChartBubble(isNew and showInitFibData and show_Fib_bubbles, MB, "MB|" + AsPrice(MB), MB.TakeValueColor());
+AddChartBubble(isNew and showInitFibData and show_Fib_bubbles, ProfileHigh, "ProfileHigh|" + AsPrice(ProfileHigh), ProfileHigh.TakeValueColor());
+AddChartBubble(isNew and showInitFibData and show_Fib_bubbles, ProfileLow, "ProfileLow|" + AsPrice(ProfileLow), ProfileLow.TakeValueColor());
+AddChartBubble(isNew and showInitFibData and show_Fib_bubbles, ProfileMid, "ProfileMid|" + AsPrice(ProfileMid), ProfileMid.TakeValueColor());
+
+##############################
+#Fib Section
+##############################
+# generate the initial Fibs for then next day
+def Pct200 = Math(if mb_used < midProfile then lProfile - 2 * (midProfile - mb_used) else hProfile + 2 * (mb_used - midProfile)).MRound;
+def F0 = if Pct200 < midProfile then midProfile else Pct200;
+def F100 = if Pct200 > midProfile then midProfile else Pct200;
+def fibRg = AbsValue(F0 - F100);
+
+def Fneg100a = Math(F0 + fibRg).MRound;
+def Fneg80a = Math(F0 + .8 * fibRg).MRound;
+def Fneg50a = Math(F0 + .5 * fibRg).MRound;
+def Fneg20a = Math(F0 + .2 * fibRg).MRound;
+def F0a = Math(F0).MRound;
+def F20a = Math(F0 - .2 * fibRg).MRound;
+def F50a = Math(F0 - .5 * fibRg).MRound;
+def F80a = Math(F0 - .8 * fibRg).MRound;
+def F100a = Math(F100).MRound;
+;
+def F120a = Math(F0 - 1.2 * fibRg).MRound;
+def F150a = Math(F0 - 1.5 * fibRg).MRound;
+def F180a = Math(F0 - 1.8 * fibRg).MRound;
+def F200a = Math(F0 - 2 * fibRg).MRound;
+;
+
+plot init200Mark = if !showInitFibData then na else Pct200;
+plot Fibneg100a = if !showInitFibs then na else Fneg100a;
+plot Fibneg80a = if !showInitFibs then na else Fneg80a;
+plot Fibneg50a = if !showInitFibs then na else Fneg50a;
+plot Fibneg20a = if !showInitFibs then na else Fneg20a;
+plot Fib0a = if !showInitFibs then na else F0a;
+plot Fib20a = if !showInitFibs then na else F20a;
+plot Fib50a = if !showInitFibs then na else F50a;
+plot Fib80a = if !showInitFibs then na else F80a;
+plot Fib100a = if !showInitFibs then na else F100;
+plot Fib120a = if !showInitFibs then na else F120a;
+plot Fib150a = if !showInitFibs then na else F150a;
+plot Fib180a = if !showInitFibs then na else F180a;
+plot Fib200a = if !showInitFibs then na else F200a;
+
+init200Mark.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+init200Mark.SetDefaultColor(GetColor(9));
+Fibneg100a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fibneg100a.AssignValueColor(GetColor(Fib_Init_Color));
+Fibneg80a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fibneg80a.AssignValueColor(GetColor(Fib_Init_Color));
+Fibneg50a.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fibneg50a.AssignValueColor(GetColor(Fib_Init_Color));
+Fibneg20a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fibneg20a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib0a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib0a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib20a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib20a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib50a.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fib50a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib80a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib80a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib100a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib100a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib120a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib120a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib150a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib150a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib180a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib180a.AssignValueColor(GetColor(Fib_Init_Color));
+Fib200a.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib200a.AssignValueColor(GetColor(Fib_Init_Color));
+AddChartBubble(isNew and showInitFibData and show_Fib_bubbles, init200Mark, AsPercent(2) + " Extension|" + AsPrice(init200Mark), init200Mark.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fibneg100a, AsPercent(-1) + "|" + AsPrice(Fibneg100a), Fibneg100a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fibneg80a,  AsPercent(-.8) + "|" + AsPrice(Fibneg80a), Fibneg80a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fibneg50a,  AsPercent(-.5) + "|" + AsPrice(Fibneg50a), Fibneg50a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fibneg20a,  AsPercent(-.2) + "|" + AsPrice(Fibneg20a), Fibneg20a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib0a,  AsPercent(0) + "|" + AsPrice(Fib0a), Fib0a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib20a,  AsPercent(.2) + "|" + AsPrice(Fib20a), Fib20a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib50a,  AsPercent(.5) + "|" + AsPrice(Fib50a), Fib50a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib80a,  AsPercent(.8) + "|" + AsPrice(Fib80a), Fib80a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib100a,  AsPercent(1) + "|" + AsPrice(Fib100a), Fib100a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib120a,  AsPercent(1.2) + "|" + AsPrice(Fib120a), Fib120a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib150a,  AsPercent(1.5) + "|" + AsPrice(Fib150a), Fib150a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib180a,  AsPercent(1.8) + "|" + AsPrice(Fib180a), Fib180a.TakeValueColor());
+AddChartBubble(isNew and showInitFibs and show_Fib_bubbles, Fib200a,  AsPercent(2) + "|" + AsPrice(Fib200a), Fib200a.TakeValueColor());
+
+# "move over" the previously calculated Fibs to the new day
+
+def FbRange = if inLastPeriod then FbRange[1] else if isNew then fibRg[1] else FbRange[1];
+def prevFibRg = if inLastPeriod then prevFibRg[1] else FbRange;
+def Fbneg100 = if inLastPeriod then Fbneg100[1] else if isNew then Fneg100a[1] else Fbneg100[1];
+def Fbneg80 = if inLastPeriod then Fbneg80[1] else if isNew then Fneg80a[1] else Fbneg80[1];
+def Fbneg50 = if inLastPeriod then Fbneg50[1] else if isNew then Fneg50a[1] else Fbneg50[1];
+def Fbneg20 = if inLastPeriod then Fbneg20[1] else if isNew then Fneg20a[1] else Fbneg20[1];
+def Fb0 = if inLastPeriod then Fb0[1] else if isNew then F0a[1] else Fb0[1];
+def Fb20 = if inLastPeriod then Fb20[1] else if isNew then F20a[1] else Fb20[1];
+def Fb50 = if inLastPeriod then Fb50[1] else if isNew then F50a[1] else Fb50[1];
+def Fb80 = if inLastPeriod then Fb80[1] else if isNew then F80a[1] else Fb80[1];
+def Fb100 = if inLastPeriod then Fb100[1] else if isNew then F100a[1] else Fb100[1];
+def Fb120 = if inLastPeriod then Fb120[1] else if isNew then F120a[1] else Fb120[1];
+def Fb150 = if inLastPeriod then Fb150[1] else if isNew then F150a[1] else Fb150[1];
+def Fb180 = if inLastPeriod then Fb180[1] else if isNew then F180a[1] else Fb180[1];
+def Fb200 = if inLastPeriod then Fb200[1] else if isNew then F200a[1] else Fb200[1];
+
+
+def bubble_bar = if showOnlyLastPeriod then highest_bn else if bn < HighestAll(isNewbn) then isNewbn else highest_bn;
+def show_Fibs = if show_Current_Period_Fibs then if !showOnlyLastPeriod then yes else
+                     if bn >= HighestAll(isNewbn) then yes else no else no ;
+def Fib_bubbles_on = show_Fibs and show_Fib_bubbles and bn == bubble_bar;
+
+# extended upwards
+plot Fib0up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + 2 * FbRange).MRound;
+plot Fib20up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + 1.8 * FbRange).MRound;
+plot Fib50up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + 1.5 * FbRange).MRound;
+plot Fib80up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + 1.2 * FbRange).MRound;
+plot Fib100up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + FbRange).MRound;
+plot Fib120up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + .8 * FbRange).MRound;
+plot Fib150up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + .5 * FbRange).MRound;
+plot Fib180up = if !(show_Fibs and dupe_Fibs_up) then na else Math(Fbneg100 + .2 * FbRange).MRound;
+# regular plots
+plot Fibneg100 = if !show_Fibs then na else Fbneg100;
+plot Fibneg80 = if !show_Fibs then na else Fbneg80;
+plot Fibneg50 = if !show_Fibs then na else Fbneg50;
+plot Fibneg20 = if !show_Fibs then na else Fbneg20;
+plot Fib0 = if !show_Fibs then na else Fb0;
+plot Fib20 = if !show_Fibs then na else Fb20;
+plot Fib50 = if !show_Fibs then na else Fb50;
+plot Fib80 = if !show_Fibs then na else Fb80;
+plot Fib100 = if !show_Fibs then na else Fb100;
+plot Fib120 = if !show_Fibs then na else Fb120;
+plot Fib150 = if !show_Fibs then na else Fb150;
+plot Fib180 = if !show_Fibs then na else Fb180;
+plot Fib200 = if !show_Fibs then na else Fb200;
+# extended downward
+plot Fib180dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - .2 * FbRange).MRound;
+plot Fib150dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - .5 * FbRange).MRound;
+plot Fib120dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - .8 * FbRange).MRound;
+plot Fib100dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - FbRange).MRound;
+plot Fib80dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - 1.2 * FbRange).MRound;
+plot Fib50dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - 1.5 * FbRange).MRound;
+plot Fib20dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - 1.8 * FbRange).MRound;
+plot Fib0dn = if !(show_Fibs and dupe_Fibs_down) then na else Math(Fib200 - 2 * FbRange).MRound;
+
+Fib0up.HideBubble();
+Fib20up.HideBubble();
+Fib50up.HideBubble();
+Fib80up.HideBubble();
+Fib100up.HideBubble();
+Fib120up.HideBubble();
+Fib150up.HideBubble();
+Fib180up.HideBubble();
+Fibneg100.HideBubble();
+Fibneg80.HideBubble();
+Fibneg50.HideBubble();
+Fibneg20.HideBubble();
+Fib0.HideBubble();
+Fib20.HideBubble();
+Fib50.HideBubble();
+Fib80.HideBubble();
+Fib100.HideBubble();
+Fib120.HideBubble();
+Fib150.HideBubble();
+Fib180.HideBubble();
+Fib200.HideBubble();
+Fib180dn.HideBubble();
+Fib150dn.HideBubble();
+Fib120dn.HideBubble();
+Fib100dn.HideBubble();
+Fib80dn.HideBubble();
+Fib50dn.HideBubble();
+Fib20dn.HideBubble();
+Fib0dn.HideBubble();
+
+Fib0up.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib20up.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib50up.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fib80up.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib100up.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib120up.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib150up.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fib180up.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib0up.AssignValueColor(GetColor(Fib_Color));
+Fib20up.AssignValueColor(GetColor(Fib_Color));
+Fib50up.AssignValueColor(GetColor(Fib_Color));
+Fib80up.AssignValueColor(GetColor(Fib_Color));
+Fib100up.AssignValueColor(GetColor(Fib_Color));
+Fib120up.AssignValueColor(GetColor(Fib_Color));
+Fib150up.AssignValueColor(GetColor(Fib_Color));
+Fib180up.AssignValueColor(GetColor(Fib_Color));
+Fibneg100.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fibneg100.AssignValueColor(GetColor(Fib_Color));
+Fibneg80.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fibneg80.AssignValueColor(GetColor(Fib_Color));
+Fibneg50.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fibneg50.AssignValueColor(GetColor(Fib_Color));
+Fibneg20.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fibneg20.AssignValueColor(GetColor(Fib_Color));
+Fib0.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib0.AssignValueColor(GetColor(Fib_Color));
+Fib20.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib20.AssignValueColor(GetColor(Fib_Color));
+Fib50.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fib50.AssignValueColor(GetColor(Fib_Color));
+Fib80.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib80.AssignValueColor(GetColor(Fib_Color));
+Fib100.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib100.AssignValueColor(GetColor(Fib_Color));
+Fib120.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib120.AssignValueColor(GetColor(Fib_Color));
+Fib150.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fib150.AssignValueColor(GetColor(Fib_Color));
+Fib180.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib180.AssignValueColor(GetColor(Fib_Color));
+Fib200.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib200.AssignValueColor(GetColor(Fib_Color));
+Fib0dn.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib20dn.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib50dn.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fib80dn.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib100dn.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib120dn.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib150dn.SetPaintingStrategy(PaintingStrategy.DASHES);
+Fib180dn.SetPaintingStrategy(PaintingStrategy.HORIZONTAL);
+Fib0dn.AssignValueColor(GetColor(Fib_Color));
+Fib20dn.AssignValueColor(GetColor(Fib_Color));
+Fib50dn.AssignValueColor(GetColor(Fib_Color));
+Fib80dn.AssignValueColor(GetColor(Fib_Color));
+Fib100dn.AssignValueColor(GetColor(Fib_Color));
+Fib120dn.AssignValueColor(GetColor(Fib_Color));
+Fib150dn.AssignValueColor(GetColor(Fib_Color));
+Fib180dn.AssignValueColor(GetColor(Fib_Color));
+
+
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib0up,  AsPercent(0) + "|" + AsPrice(Fib0up), Fib0up.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib20up,  AsPercent(.2) + "|" + AsPrice(Fib20up), Fib20up.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib50up,  AsPercent(.5) + "|" + AsPrice(Fib50up), Fib50up.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib80up,  AsPercent(.8) + "|" + AsPrice(Fib80up), Fib80up.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib100up,  AsPercent(1) + "|" + AsPrice(Fib100up), Fib100up.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib120up,  AsPercent(1.2) + "|" + AsPrice(Fib120up), Fib120up.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib150up,  AsPercent(1.5) + "|" + AsPrice(Fib150up), Fib150up.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_up, Fib180up,  AsPercent(1.8) + "|" + AsPrice(Fib180up), Fib180up.TakeValueColor());
+
+AddChartBubble(Fib_bubbles_on, Fibneg100, AsPercent(-1) + "|" + AsPrice(Fibneg100), Fibneg100.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fibneg80,  AsPercent(-.8) + "|" + AsPrice(Fibneg80), Fibneg80.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fibneg50,  AsPercent(-.5) + "|" + AsPrice(Fibneg50), Fibneg50.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fibneg20,  AsPercent(-.2) + "|" + AsPrice(Fibneg20), Fibneg20.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib0,  AsPercent(0) + "|" + AsPrice(Fib0), Fib0.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib20,  AsPercent(.2) + "|" + AsPrice(Fib20), Fib20.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib50,  AsPercent(.5) + "|" + AsPrice(Fib50), Fib50.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib80,  AsPercent(.8) + "|" + AsPrice(Fib80), Fib80.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib100,  AsPercent(1) + "|" + AsPrice(Fib100), Fib100.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib120,  AsPercent(1.2) + "|" + AsPrice(Fib120), Fib120.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib150,  AsPercent(1.5) + "|" + AsPrice(Fib150), Fib150.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib180,  AsPercent(1.8) + "|" + AsPrice(Fib180), Fib180.TakeValueColor());
+AddChartBubble(Fib_bubbles_on, Fib200,  AsPercent(2) + "|" + AsPrice(Fib200), Fib200.TakeValueColor());
+
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib180dn,  AsPercent(1.8) + "|" + AsPrice(Fib180dn), Fib180dn.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib150dn,  AsPercent(1.5) + "|" + AsPrice(Fib150dn), Fib150dn.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib120dn,  AsPercent(1.2) + "|" + AsPrice(Fib120dn), Fib120dn.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib100dn,  AsPercent(1) + "|" + AsPrice(Fib100dn), Fib100dn.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib80dn,  AsPercent(.8) + "|" + AsPrice(Fib80dn), Fib80dn.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib50dn,  AsPercent(.5) + "|" + AsPrice(Fib50dn), Fib50dn.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib20dn,  AsPercent(.2) + "|" + AsPrice(Fib20dn), Fib20dn.TakeValueColor());
+AddChartBubble(Fib_bubbles_on and dupe_Fibs_down, Fib0dn,  AsPercent(0) + "|" + AsPrice(Fib0dn), Fib0dn.TakeValueColor());
+
+AddCloud(if !showClouds then na else Fib0up,if !showClouds then na else Fib20up,color.downtick);
+
+AddCloud(if !showClouds then na else Fib80up,if !showClouds then na else Fib100up,color.uptick);
+AddCloud(if !showClouds then na else Fib100up,if !showClouds then na else Fib120up,color.downtick);
+
+AddCloud(if !showClouds then na else Fib180up,if !showClouds then na else Fibneg100,color.uptick);
+AddCloud(if !showClouds then na else Fibneg100,if !showClouds then na else Fibneg80,color.downtick);
+
+AddCloud(if !showClouds then na else Fibneg20,if !showClouds then na else Fib0,color.uptick);
+AddCloud(if !showClouds then na else Fib0,if !showClouds then na else Fib20,color.downtick);
+
+AddCloud(if !showClouds then na else Fib80,if !showClouds then na else Fib100,color.uptick);
+AddCloud(if !showClouds then na else Fib100,if !showClouds then na else Fib120,color.downtick);
+
+AddCloud(if !showClouds then na else Fib180,if !showClouds then na else Fib200,color.uptick);
+AddCloud(if !showClouds then na else Fib200,if !showClouds then na else Fib180dn,color.downtick);
+
+AddCloud(if !showClouds then na else Fib120dn,if !showClouds then na else Fib100dn,color.uptick);
+AddCloud(if !showClouds then na else Fib100dn,if !showClouds then na else Fib80dn,color.downtick);
+
+AddCloud(if !showClouds then na else Fib20dn,if !showClouds then na else Fib0dn,color.uptick);
